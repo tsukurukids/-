@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>おこづかい ちょきんばこ 📦</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --pink: #ff6b9d;
+      --pink-light: #ffe0ec;
+      --blue: #4dabf7;
+      --blue-light: #e7f5ff;
+      --green: #51cf66;
+      --green-light: #ebfbee;
+      --yellow: #ffd43b;
+      --yellow-light: #fff9db;
+      --orange: #ff922b;
+      --purple: #9775fa;
+      --red: #ff6b6b;
+      --bg: #fff5f8;
+      --card: #ffffff;
+      --text: #333;
+      --shadow: 0 4px 20px rgba(255, 107, 157, 0.15);
+      --parent: #5c7cfa;
+      --parent-light: #edf2ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+      background: linear-gradient(160deg, var(--bg) 0%, var(--blue-light) 50%, var(--yellow-light) 100%);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 16px;
+      padding-bottom: 40px;
+    }
+
+    .container { max-width: 520px; margin: 0 auto; }
+
+  /* ヘッダー */
+    header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      color: var(--pink);
+      text-shadow: 2px 2px 0 var(--yellow);
+      line-height: 1.4;
+    }
+
+    header h1 ruby rt { font-size: 0.45em; }
+
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 3px solid var(--blue);
+      border-radius: 999px;
+      padding: 8px 20px;
+      margin-top: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--blue);
+      box-shadow: var(--shadow);
+    }
+
+  /* カード共通 */
+    .card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      border: 3px solid transparent;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title ruby rt { font-size: 0.45em; }
+
+  /* 残高表示 */
+    .balance-card {
+      background: linear-gradient(135deg, var(--pink-light), var(--yellow-light));
+      border-color: var(--pink);
+      text-align: center;
+    }
+
+    .balance-label { font-size: 0.95rem; color: #666; }
+    .balance-label ruby rt { font-size: 0.45em; }
+
+    .balance-amount {
+      font-size: 2.8rem;
+      font-weight: bold;
+      color: var(--pink);
+      line-height: 1.2;
+      margin: 4px 0;
+    }
+
+    .balance-amount.negative { color: var(--red); }
+
+    .goal-bar-wrap { margin-top: 12px; }
+
+    .goal-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .goal-info ruby rt { font-size: 0.45em; }
+
+    .progress-bar {
+      height: 18px;
+      background: #eee;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 2px solid var(--purple);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple), var(--pink));
+      border-radius: 999px;
+      transition: width 0.5s ease;
+      min-width: 0;
+    }
+
+  /* 目標設定 */
+    .goal-setting {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .goal-setting label {
+      font-size: 0.8rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .goal-setting label ruby rt { font-size: 0.45em; }
+
+    .goal-setting input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 2px solid var(--purple);
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+  /* 入力フォーム */
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .input-row label {
+      font-size: 0.9rem;
+      white-space: nowrap;
+      min-width: 70px;
+    }
+
+    .input-row label ruby rt { font-size: 0.45em; }
+
+  .input-row input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 2px solid var(--blue);
+      border-radius: 16px;
+      font-size: 1.1rem;
+      font-family: inherit;
+    }
+
+    .input-row input:focus {
+      outline: none;
+      border-color: var(--pink);
+      box-shadow: 0 0 0 3px var(--pink-light);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      padding: 14px 10px;
+      border: none;
+      border-radius: 20px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn-add {
+      background: linear-gradient(135deg, var(--green), #40c057);
+      color: white;
+      box-shadow: 0 4px 0 #2b8a3e;
+    }
+
+    .btn-sub {
+      background: linear-gradient(135deg, var(--orange), #fd7e14);
+      color: white;
+      box-shadow: 0 4px 0 #d9480f;
+    }
+
+    .btn-add:hover, .btn-sub:hover { filter: brightness(1.05); }
+
+  /* グラフ */
+    .period-btns {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .period-btn {
+      flex: 1;
+      padding: 10px;
+      border: 3px solid var(--blue);
+      border-radius: 16px;
+      background: white;
+      font-size: 1rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .period-btn.active {
+      background: var(--blue);
+      color: white;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 220px;
+    }
+
+  /* 履歴 */
+    .history-list {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      margin-bottom: 8px;
+      background: var(--blue-light);
+      border-left: 5px solid var(--blue);
+    }
+
+    .history-item.plus {
+      background: var(--green-light);
+      border-left-color: var(--green);
+    }
+
+    .history-item.minus {
+      background: #fff0f0;
+      border-left-color: var(--red);
+    }
+
+    .history-date {
+      font-size: 0.75rem;
+      color: #888;
+      min-width: 72px;
+    }
+
+    .history-reason {
+      flex: 1;
+      font-size: 0.95rem;
+    }
+
+    .history-amount {
+      font-weight: bold;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+
+    .history-amount.plus { color: var(--green); }
+    .history-amount.minus { color: var(--red); }
+
+    .empty-msg {
+      text-align: center;
+      color: #aaa;
+      padding: 24px;
+      font-size: 0.95rem;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+
+    .history-header .card-title { margin-bottom: 0; }
+
+    .btn-delete-all {
+      padding: 8px 14px;
+      border: 2px solid var(--red);
+      border-radius: 14px;
+      background: white;
+      color: var(--red);
+      font-size: 0.85rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn-delete-all:hover { background: #fff0f0; }
+    .btn-delete-all:active { transform: scale(0.96); }
+
+    .btn-delete-one {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255, 107, 107, 0.15);
+      color: var(--red);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.15s;
+    }
+
+    .btn-delete-one:hover { background: rgba(255, 107, 107, 0.3); }
+    .btn-delete-one:active { transform: scale(0.9); }
+
+  /* ミッションリスト */
+    .mission-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .mission-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      background: var(--yellow-light);
+      border-left: 5px solid var(--yellow);
+    }
+
+    .mission-name {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: bold;
+    }
+
+    .mission-reward {
+      font-weight: bold;
+      color: var(--orange);
+      white-space: nowrap;
+    }
+
+    .btn-mission-done {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--green), #40c057);
+      color: white;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #2b8a3e;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .btn-mission-done:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 transparent;
+    }
+
+  /* オーバーレイ共通 */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .overlay.show { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+  /* 目標達成 */
+    .celebrate-overlay {
+      background: rgba(255, 107, 157, 0.85);
+    }
+
+    .celebrate-box {
+      background: white;
+      border-radius: 32px;
+      padding: 32px 28px;
+      text-align: center;
+      max-width: 340px;
+      margin: 16px;
+      border: 5px solid var(--yellow);
+      animation: bounceIn 0.6s ease;
+      position: relative;
+      z-index: 2;
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .cracker-icon { font-size: 4rem; animation: wiggle 0.5s infinite alternate; }
+
+    @keyframes wiggle {
+      from { transform: rotate(-10deg); }
+      to { transform: rotate(10deg); }
+    }
+
+    .celebrate-title {
+      font-size: 2rem;
+      color: var(--pink);
+      margin: 12px 0 8px;
+      font-weight: bold;
+    }
+
+    .celebrate-msg { font-size: 1.1rem; line-height: 1.6; }
+    .celebrate-msg ruby rt { font-size: 0.45em; }
+
+    .overlay-close-btn {
+      margin-top: 20px;
+      padding: 12px 32px;
+      background: var(--pink);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .confetti {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      top: -20px;
+      animation: fall linear forwards;
+      z-index: 1;
+      border-radius: 2px;
+    }
+
+    @keyframes fall {
+      to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    .pin-overlay {
+      background: rgba(92, 124, 250, 0.4);
+    }
+
+    /* お母さん・お父さんの選択画面の背景色 */
+    .parent-choice-overlay {
+      background: rgba(92, 124, 250, 0.95);
+    }
+
+  /* がっくり警告 */
+    .gakkuri-overlay {
+      background: rgba(80, 80, 80, 0.88);
+    }
+
+    .gakkuri-box {
+      background: white;
+      border-radius: 32px;
+      padding: 32px 28px;
+      text-align: center;
+      max-width: 340px;
+      margin: 16px;
+      border: 5px solid var(--red);
+      animation: shake 0.5s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-12px); }
+      40% { transform: translateX(12px); }
+      60% { transform: translateX(-8px); }
+      80% { transform: translateX(8px); }
+    }
+
+    .gakkuri-face { font-size: 4rem; }
+
+    .gakkuri-title {
+      font-size: 1.8rem;
+      color: var(--red);
+      margin: 12px 0 8px;
+      font-weight: bold;
+    }
+
+    .gakkuri-msg { font-size: 1.05rem; line-height: 1.6; color: #555; }
+
+    .pig-icon { font-size: 3rem; margin-bottom: 4px; }
+
+  /* かくにんオーバーレイ */
+    .approval-overlay {
+      background: rgba(92, 124, 250, 0.88);
+    }
+
+    .approval-box {
+      background: white;
+      border-radius: 32px;
+      padding: 32px 28px;
+      text-align: center;
+      max-width: 360px;
+      margin: 16px;
+      border: 5px solid var(--yellow);
+      animation: bounceIn 0.5s ease;
+    }
+
+    .approval-title {
+      font-size: 1.6rem;
+      color: var(--parent);
+      margin: 12px 0 16px;
+      font-weight: bold;
+    }
+
+    .approval-msg { font-size: 1.1rem; line-height: 1.6; margin-bottom: 24px; }
+
+    .approval-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn-approve {
+      background: linear-gradient(135deg, var(--green), #40c057);
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 20px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #2b8a3e;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .btn-approve:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 transparent;
+    }
+
+    .btn-reject {
+      background: white;
+      color: var(--red);
+      border: 2px solid var(--red);
+      padding: 12px;
+      border-radius: 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* モード切替 */
+    .mode-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      border: 2px solid var(--blue-light);
+    }
+
+    .mode-label {
+      font-size: 0.95rem;
+      font-weight: bold;
+    }
+
+    .mode-label.kid { color: var(--pink); }
+    .mode-label.parent { color: var(--parent); }
+
+    .btn-mode-switch {
+      padding: 8px 14px;
+      border: 2px solid var(--parent);
+      border-radius: 12px;
+      background: white;
+      color: var(--parent);
+      font-size: 0.85rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-mode-switch:hover { background: var(--parent-light); }
+    .btn-mode-switch.kid-back {
+      border-color: var(--pink);
+      color: var(--pink);
+      background: var(--pink-light);
+    }
+
+    /* お母さん・お父さんの切り替えボタンの見た目 */
+    .parent-selector {
+      display: flex;
+      gap: 6px;
+      background: #f1f3f5;
+      padding: 4px;
+      border-radius: 12px;
+    }
+
+    .parent-select-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      background: transparent;
+      color: #868e96;
+      transition: all 0.2s;
+    }
+
+    .parent-select-btn.active.mom {
+      background: var(--pink);
+      color: white;
+    }
+
+    .parent-select-btn.active.dad {
+      background: var(--parent);
+      color: white;
+    }
+
+    body.parent-mode {
+      background: linear-gradient(160deg, #f0f4ff 0%, var(--parent-light) 50%, #e7f5ff 100%);
+    }
+
+    .mode-view { display: block; }
+    .mode-view.hidden { display: none; }
+
+    /* 保護者モード */
+    .parent-header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .parent-header h1 {
+      font-size: 1.4rem;
+      color: var(--parent);
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border: 2px solid var(--parent-light);
+    }
+
+    .stat-card.highlight {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, var(--parent-light), white);
+      border-color: var(--parent);
+    }
+
+    .stat-icon { font-size: 1.5rem; margin-bottom: 4px; }
+    .stat-label { font-size: 0.75rem; color: #666; margin-bottom: 4px; }
+    .stat-value { font-size: 1.3rem; font-weight: bold; color: var(--parent); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+    .stat-value.small { font-size: 1rem; }
+
+    .parent-card {
+      border-color: var(--parent-light);
+    }
+
+    .parent-card .card-title { color: var(--parent); }
+
+    .breakdown-list { margin-top: 8px; }
+
+    .breakdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .breakdown-name {
+      flex: 1;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .breakdown-bar-wrap {
+      flex: 2;
+      height: 12px;
+      background: #eee;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .breakdown-bar {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .breakdown-bar.spend { background: var(--orange); }
+    .breakdown-bar.income { background: var(--green); }
+
+    .breakdown-amount {
+      font-size: 0.85rem;
+      font-weight: bold;
+      min-width: 70px;
+      text-align: right;
+    }
+
+    .parent-history-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .parent-history-item {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      background: #f8f9fa;
+      font-size: 0.85rem;
+      align-items: center;
+    }
+
+    .parent-history-item.plus { border-left: 4px solid var(--green); }
+    .parent-history-item.minus { border-left: 4px solid var(--red); }
+
+    .growth-msg {
+      background: var(--parent-light);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 14px;
+      color: #444;
+    }
+
+    .pin-box {
+      background: white;
+      border-radius: 28px;
+      padding: 28px 24px;
+      text-align: center;
+      max-width: 320px;
+      margin: 16px;
+      border: 4px solid var(--parent);
+    }
+
+    .pin-box h2 {
+      font-size: 1.2rem;
+      color: var(--parent);
+      margin-bottom: 8px;
+    }
+
+    .pin-box p {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 14px;
+    }
+
+    .pin-input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid var(--parent);
+      border-radius: 14px;
+      font-size: 1.5rem;
+      text-align: center;
+      letter-spacing: 8px;
+      font-family: inherit;
+      margin-bottom: 14px;
+    }
+
+    .pin-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--parent-light);
+    }
+
+    .pin-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .pin-btns button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .btn-pin-ok { background: var(--parent); color: white; }
+    .btn-pin-cancel { background: #eee; color: #555; }
+
+    .pin-error {
+      color: var(--red);
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      min-height: 1.2em;
+    }
+
+    .pin-setting {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 2px dashed #ddd;
+    }
+
+    .pin-setting label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+      color: #666;
+    }
+
+    .pin-setting input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      margin-bottom: 8px;
+    }
+
+    .btn-save-pin {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid var(--parent);
+      border-radius: 12px;
+      background: white;
+      color: var(--parent);
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* チャット機能のデザイン */
+    .chat-container {
+      max-height: 250px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: #f1f3f5;
+      border-radius: 18px;
+      border: 2px solid #e9ecef;
+    }
+
+    .chat-msg-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      max-width: 85%;
+    }
+
+    .chat-msg-wrapper.left {
+      align-self: flex-start;
+    }
+
+    .chat-msg-wrapper.right {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .chat-bubble {
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      word-break: break-all;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .chat-msg-wrapper.left .chat-bubble {
+      background: white;
+      color: var(--text);
+      border: 2px solid #e9ecef;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-msg-wrapper.right .chat-bubble {
+      background: #9fee90;
+      color: #1a531b;
+      border-bottom-right-radius: 4px;
+    }
+
+    /* ほごしゃモード用の右側のふきだしは青っぽくするよ */
+    .chat-msg-wrapper.right.parent-bubble .chat-bubble {
+      background: #c3dafe;
+      color: #1c3d5a;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-time {
+      font-size: 0.7rem;
+      color: #868e96;
+      white-space: nowrap;
+    }
+
+    .btn-delete-msg {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px;
+      color: #adb5bd;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    .btn-delete-msg:hover {
+      color: var(--red) !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- モード切替バー -->
+    <div class="mode-bar">
+      <span class="mode-label kid" id="modeLabel">👦 じぶんモード</span>
+      
+      <!-- ほごしゃモードのときだけ、お母さん・お父さんを切り替えるボタンを見せるよ -->
+      <button type="button" class="btn-mode-switch" id="btnOpenParentChoice" style="display: none; border-color: var(--parent); color: var(--parent);">🔄 切りかえ</button>
+
+      <button type="button" class="btn-mode-switch" id="btnModeSwitch">🔒 ほごしゃモード</button>
+    </div>
+
+    <!-- ===== じぶんモード ===== -->
+    <div id="kidMode" class="mode-view">
+    <header>
+      <div class="pig-icon">🐷</div>
+      <h1>
+        <ruby>お<rt>お</rt></ruby><ruby>小<rt>こ</rt></ruby><ruby>遣<rt>づか</rt></ruby>い
+        <ruby>貯<rt>ちょ</rt></ruby><ruby>金<rt>きん</rt></ruby>ばこ
+      </h1>
+      <div class="date-badge" id="todayDate">📅 よみこみ中...</div>
+    </header>
+
+    <!-- 残高 -->
+    <section class="card balance-card">
+      <div class="balance-label">
+        💰 <ruby>今<rt>いま</rt></ruby>の<ruby>持<rt>も</rt></ruby>ち<ruby>金<rt>かね</rt></ruby>
+      </div>
+      <div class="balance-amount" id="balanceDisplay">0<small>えん</small></div>
+
+      <div class="goal-bar-wrap">
+        <div class="goal-info">
+          <span>🎯 <ruby>目標<rt>もくひょう</rt></ruby>: <strong id="goalNameDisplay">ゲーム</strong></span>
+          <span id="goalAmountDisplay">3,000えん</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="goal-setting">
+        <div>
+          <label><ruby>目標<rt>もくひょう</rt></ruby>の<ruby>名前<rt>なまえ</rt></ruby></label>
+          <input type="text" id="goalNameInput" value="ゲーム" maxlength="20">
+        </div>
+        <div>
+          <label><ruby>目標<rt>もくひょう</rt></ruby>の<ruby>金<rt>きん</rt></ruby><ruby>額<rt>がく</rt></ruby></label>
+          <input type="number" id="goalAmountInput" value="3000" min="1" max="999999">
+        </div>
+      </div>
+    </section>
+
+    <!-- ミッション（お手伝い） -->
+    <section class="card">
+      <div class="card-title">🌟 おてつだいミッション</div>
+      <div class="mission-list" id="kidMissionList">
+        <div class="empty-msg">いまは ミッションがないよ 🏖️</div>
+      </div>
+    </section>
+
+    <!-- 入出金 -->
+    <section class="card">
+      <div class="card-title">✏️ <ruby>記<rt>き</rt></ruby><ruby>録<rt>ろく</rt></ruby>する</div>
+      <div class="input-row">
+        <label>💴 <ruby>金<rt>きん</rt></ruby><ruby>額<rt>がく</rt></ruby></label>
+        <input type="number" id="amountInput" placeholder="100" min="1" max="999999">
+      </div>
+      <div class="input-row">
+        <label>📝 <ruby>理<rt>り</rt></ruby><ruby>由<rt>ゆう</rt></ruby></label>
+        <input type="text" id="reasonInput" placeholder="お年玉、お菓子..." maxlength="30">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-add" id="btnAdd">➕ <ruby>入<rt>い</rt></ruby>れる</button>
+        <button class="btn btn-sub" id="btnSub">➖ <ruby>使<rt>つか</rt></ruby>う</button>
+      </div>
+    </section>
+
+    <!-- グラフ -->
+    <section class="card">
+      <div class="card-title">📈 グラフ</div>
+      <div class="period-btns">
+        <button class="period-btn active" data-period="今週">📅 <ruby>今<rt>こん</rt></ruby><ruby>週<rt>しゅう</rt></ruby>（7<ruby>日<rt>にち</rt></ruby>）</button>
+        <button class="period-btn" data-period="今月">📅 <ruby>今<rt>こん</rt></ruby><ruby>月<rt>げつ</rt></ruby>（30<ruby>日<rt>にち</rt></ruby>）</button>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="moneyChart"></canvas>
+      </div>
+    </section>
+
+    <!-- 履歴 -->
+    <section class="card">
+      <div class="history-header">
+        <div class="card-title">📋 <ruby>履<rt>り</rt></ruby><ruby>歴<rt>れき</rt></ruby></div>
+        <button type="button" class="btn-delete-all" id="btnDeleteAll" title="ぜんぶけす">🗑️ <ruby>全部<rt>ぜんぶ</rt></ruby>けす</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="empty-msg">まだ<ruby>記<rt>き</rt></ruby><ruby>録<rt>ろく</rt></ruby>がないよ 🌱</div>
+      </div>
+    </section>
+
+    <!-- チャット -->
+    <section class="card">
+      <div class="chat-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px;">
+        <div class="card-title" id="kidChatTitle" style="margin-bottom: 0;">💬 チャット</div>
+        <!-- チャット相手を選ぶ小さなボタン -->
+        <div class="parent-selector" id="kidChatPartnerSelector" style="background: #f1f3f5; padding: 2px; border-radius: 10px; display: flex; gap: 4px;">
+          <button type="button" class="parent-select-btn active mom" id="btnKidChatMom" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 8px;">👩 ママ</button>
+          <button type="button" class="parent-select-btn dad" id="btnKidChatDad" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 8px;">👨 パパ</button>
+        </div>
+      </div>
+      <div class="chat-container" id="kidChatContainer">
+        <!-- メッセージがここに表示されるよ -->
+      </div>
+      <div class="input-row" style="margin-bottom: 0;">
+        <input type="text" id="chatInputKid" placeholder="メッセージをおくる..." maxlength="100">
+        <button type="button" class="btn btn-add" id="btnSendChatKid" style="flex-shrink: 0; padding: 12px 20px; border-radius: 16px; margin-top: 0; box-shadow: 0 4px 0 #2b8a3e;">おくる</button>
+      </div>
+    </section>
+    </div><!-- /kidMode -->
+
+    <!-- ===== ほごしゃモード ===== -->
+    <div id="parentMode" class="mode-view hidden">
+      <div class="parent-header">
+        <h1 id="parentHeaderTitle">👨‍👩‍👧 ほごしゃモード</h1>
+        <div class="date-badge" id="parentTodayDate" style="border-color: var(--parent); color: var(--parent);">📅</div>
+      </div>
+
+      <div class="growth-msg" id="growthMsg">データをよみこみ中...</div>
+
+      <div class="stat-grid" id="parentStats"></div>
+
+      <!-- 未払いリスト -->
+      <section class="card parent-card" style="border-color: var(--orange);">
+        <div class="card-title" style="color: var(--orange);">👛 実際にお金を渡すリスト</div>
+        <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">チェックしたお手伝いです。本物のお金を渡したら「渡したよ」を押してね！</p>
+        <div class="mission-list" id="unpaidChoresList">
+          <div class="empty-msg">お金を渡す待ちのものは ありません</div>
+        </div>
+      </section>
+
+      <section class="card parent-card">
+        <div class="card-title">🌟 ミッション（お手伝い）を作る</div>
+        <div class="input-row">
+          <label>📝 なまえ</label>
+          <input type="text" id="missionNameInput" placeholder="お風呂そうじ" maxlength="20">
+        </div>
+        <div class="input-row">
+          <label>💴 ごほうび</label>
+          <input type="number" id="missionRewardInput" placeholder="100" min="1" max="999999">
+        </div>
+        <div class="btn-row" style="grid-template-columns: 1fr;">
+          <button class="btn btn-add" id="btnAddMission">➕ ミッションをついかする</button>
+        </div>
+        <div style="margin-top: 16px;">
+          <div class="card-title" style="font-size: 0.95rem; margin-bottom: 8px;">📋 いまあるミッション</div>
+          <div class="mission-list" id="parentMissionList"></div>
+        </div>
+      </section>
+
+      <section class="card parent-card">
+        <div class="card-title">📈 せいちょうグラフ（もちがねのへんか）</div>
+        <div class="period-btns" id="parentPeriodBtns">
+          <button class="period-btn active" data-parent-period="7">7にち</button>
+          <button class="period-btn" data-parent-period="30">30にち</button>
+          <button class="period-btn" data-parent-period="0">ぜんぶ</button>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="parentGrowthChart"></canvas>
+        </div>
+      </section>
+
+      <section class="card parent-card">
+        <div class="card-title">🛒 つかったお金（なにに使った？）</div>
+        <div class="chart-wrap" style="height: 180px;">
+          <canvas id="parentSpendChart"></canvas>
+        </div>
+        <div class="breakdown-list" id="spendBreakdown"></div>
+      </section>
+
+      <section class="card parent-card">
+        <div class="card-title">💰 もらったお金（なにでもらった？）</div>
+        <div class="breakdown-list" id="incomeBreakdown"></div>
+      </section>
+
+      <section class="card parent-card">
+        <div class="card-title">📋 すべてのきろく</div>
+        <div class="parent-history-list" id="parentHistoryList"></div>
+      </section>
+
+      <!-- チャット -->
+      <section class="card parent-card" style="border-color: var(--parent-light);">
+        <div class="card-title" style="color: var(--parent);">💬 お子さんとのチャット</div>
+        <div class="chat-container" id="parentChatContainer">
+          <!-- メッセージがここに表示されるよ -->
+        </div>
+        <div class="input-row" style="margin-bottom: 0;">
+          <input type="text" id="chatInputParent" placeholder="メッセージをおくる..." maxlength="100" style="border-color: var(--parent);">
+          <button type="button" class="btn btn-add" id="btnSendChatParent" style="flex-shrink: 0; padding: 12px 20px; border-radius: 16px; margin-top: 0; background: linear-gradient(135deg, var(--parent), #3b5bdb); box-shadow: 0 4px 0 #2b4ebb;">おくる</button>
+        </div>
+      </section>
+
+      <section class="card parent-card">
+        <div class="card-title">🔐 パスワード（PIN）の設定</div>
+        <p style="font-size:0.85rem;color:#666;margin-bottom:10px;">ほごしゃモードに入るための4けたの数字です。</p>
+        <div class="pin-setting">
+          <label>あたらしい PIN（4けた）</label>
+          <input type="password" id="newPinInput" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="1234">
+          <button type="button" class="btn-save-pin" id="btnSavePin">PINを かえる</button>
+        </div>
+      </section>
+
+      <!-- データのバックアップ・ひきつぎ -->
+      <section class="card parent-card" style="border-color: var(--purple);">
+        <div class="card-title" style="color: var(--purple);">📦 データのバックアップ・ひきつぎ</div>
+        <p style="font-size:0.85rem;color:#666;margin-bottom:10px;">すべてのデータを別のスマホに引っ越し（コピー）できます。</p>
+        
+        <div style="margin-bottom: 14px;">
+          <button type="button" class="btn-save-pin" id="btnExportData" style="border-color: var(--purple); color: var(--purple); background: white;">ふっかつのじゅもん（ひきつぎコード）をつくる</button>
+          <textarea id="exportCodeText" readonly placeholder="ここにコードが表示されます..." style="width: 100%; height: 60px; margin-top: 8px; padding: 8px; border: 2px solid var(--purple); border-radius: 10px; font-size: 0.8rem; display: none; font-family: monospace; word-break: break-all; resize: none;"></textarea>
+          <img id="exportQrCode" style="display:none; margin-top:8px; max-width:100%; border:2px solid var(--purple); border-radius:8px;">
+          <button type="button" class="btn-save-pin" id="btnCopyExportCode" style="display: none; border-color: var(--purple); color: white; background: var(--purple); margin-top: 6px; font-size: 0.9rem; padding: 8px;">📋 コードをコピーする</button>
+        </div>
+        
+        <div style="border-top: 2px dashed #ddd; padding-top: 12px;">
+          <label style="display: block; font-size: 0.8rem; margin-bottom: 4px; color: #666;">ひきつぎコードを貼り付け（ペースト）してね</label>
+          <input type="text" id="importCodeInput" placeholder="ここにコードを貼り付けてね" style="width: 100%; padding: 10px; border: 2px solid #ccc; border-radius: 10px; font-size: 0.9rem; margin-bottom: 8px;">
+          <button type="button" class="btn-save-pin" id="btnImportData" style="border-color: var(--red); color: var(--red); background: white;">データをとりこむ</button>
+        </div>
+      </section>
+    </div><!-- /parentMode -->
+  </div>
+
+  <!-- PIN入力 -->
+  <div class="overlay pin-overlay" id="pinOverlay">
+    <div class="pin-box">
+      <h2>🔒 ほごしゃモード</h2>
+      <p>PIN（4けたの数字）を入れてね<br><small>はじめは「1234」です</small></p>
+      <div class="pin-error" id="pinError"></div>
+      <input type="password" class="pin-input" id="pinInput" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••">
+      <div class="pin-btns">
+        <button type="button" class="btn-pin-cancel" id="btnPinCancel">やめる</button>
+        <button type="button" class="btn-pin-ok" id="btnPinOk">はいる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 親選択（お母さん・お父さん）オーバーレイ -->
+  <div class="overlay parent-choice-overlay" id="parentChoiceOverlay">
+    <div class="celebrate-box" style="border-color: var(--parent); max-width: 360px;">
+      <div style="font-size: 3.5rem;">👨‍👩‍👧</div>
+      <div class="celebrate-title" style="color: var(--parent); font-size: 1.6rem; margin-top: 8px;">だれが はいる？</div>
+      <p style="font-size: 0.95rem; color: #666; margin-bottom: 24px;">どちらの貯金箱を開くか選んでね！</p>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
+        <button type="button" id="btnChooseMom" style="padding: 16px; border-radius: 20px; border: none; background: linear-gradient(135deg, var(--pink), #f06595); color: white; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #c2255c; display: flex; align-items: center; justify-content: center; gap: 8px;">👩 お母さんモード</button>
+        <button type="button" id="btnChooseDad" style="padding: 16px; border-radius: 20px; border: none; background: linear-gradient(135deg, var(--parent), #3b5bdb); color: white; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #2b4ebb; display: flex; align-items: center; justify-content: center; gap: 8px;">👨 お父さんモード</button>
+      </div>
+      <button type="button" class="btn-reject" id="btnCancelChoice" style="margin-top: 20px; width: 100%; border-color: #ccc; color: #777;">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 目標達成オーバーレイ -->
+  <div class="overlay celebrate-overlay" id="celebrateOverlay">
+    <div class="celebrate-box">
+      <div class="cracker-icon">🎉🎊</div>
+      <div class="celebrate-title">おめでとう！</div>
+      <div class="celebrate-msg" id="celebrateMsg">
+        <ruby>目標<rt>もくひょう</rt></ruby>を<ruby>達<rt>たっ</rt></ruby><ruby>成<rt>せい</rt></ruby>したよ！
+      </div>
+      <button class="overlay-close-btn" id="closeCelebrate">やったー！ ✨</button>
+    </div>
+  </div>
+
+  <!-- がっくりオーバーレイ -->
+  <div class="overlay gakkuri-overlay" id="gakkuriOverlay">
+    <div class="gakkuri-box">
+      <div class="gakkuri-face">😵💸</div>
+      <div class="gakkuri-title">つかいすぎだよ！</div>
+      <div class="gakkuri-msg">
+        お<ruby>金<rt>かね</rt></ruby>が<ruby>足<rt>た</rt></ruby>りないよ…<br>
+        これから<ruby>気<rt>き</rt></ruby>をつけよう！
+      </div>
+      <button class="overlay-close-btn" id="closeGakkuri" style="background: var(--red);">わかった 😢</button>
+    </div>
+  </div>
+
+  <!-- ほごしゃの かくにんオーバーレイ -->
+  <div class="overlay approval-overlay" id="approvalOverlay">
+    <div class="approval-box">
+      <div style="font-size: 3rem;">👀</div>
+      <div class="approval-title">ミッションかくにん！</div>
+      <div class="approval-msg" id="approvalMsg">
+        お子様がミッション「〇〇」をおわらせたらしいです。<br>かくにんしてください。
+      </div>
+      <div class="approval-btns">
+        <button class="btn-approve" id="btnApproveOk">✅ 確認したよ（リストに追加）</button>
+        <button class="btn-reject" id="btnApproveNg">❌ まだだよ（元にもどす）</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== データ =====
+    // お母さん（mom）かお父さん（dad）のどちらのデータを使うかを決める変数（はじめはお母さん）
+    let currentParent = 'mom';
+
+    // どのセーブデータを使うかを決める名前（キー）を返すよ
+    function getStorageKey() {
+      return 'okodukaiApp_' + currentParent;
+    }
+
+    let appData = {
+      currentMoney: 0,
+      records: [],
+      missions: [],
+      pendingApprovals: [],
+      unpaidChores: [],
+      goalName: 'ゲーム',
+      goalAmount: 3000,
+      graphPeriod: '今週',
+      goalAchieved: false,
+      parentPin: '1234',
+      chats: [] // チャットのデータをためる配列だよ
+    };
+
+    let chart = null;
+    let parentGrowthChart = null;
+    let parentSpendChart = null;
+    let currentMode = 'kid';
+    let parentChartPeriod = 30;
+
+    // ===== 日付 =====
+    function getToday() {
+      const d = new Date();
+      const plain = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+      return {
+        dateObj: d,
+        plain,
+        displayHtml: `${d.getFullYear()}<ruby>年<rt>ねん</rt></ruby>${d.getMonth() + 1}<ruby>月<rt>がつ</rt></ruby>${d.getDate()}<ruby>日<rt>にち</rt></ruby>`,
+        iso: formatDateISO(d),
+        short: `${d.getMonth() + 1}/${d.getDate()}`
+      };
+    }
+
+    function formatDateISO(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function parseRecordDate(dateStr) {
+      if (dateStr.includes('-')) return new Date(dateStr + 'T00:00:00');
+      const match = dateStr.match(/(\d+)年(\d+)月(\d+)日/);
+      if (match) return new Date(+match[1], +match[2] - 1, +match[3]);
+      return new Date();
+    }
+
+    // ===== 保存・読み込み =====
+    // データをブラウザ（パソコンやスマホ）に保存するよ
+    function saveData() {
+      localStorage.setItem(getStorageKey(), JSON.stringify(appData));
+      // 最後に選んでいた親（お母さんかお父さん）を保存するよ
+      localStorage.setItem('okodukaiApp_lastParent', currentParent);
+    }
+
+    // データをブラウザから読み込むよ
+    function loadData() {
+      // データの読み込み
+      let raw = localStorage.getItem(getStorageKey());
+      
+      // もし新しいキーにデータがなくて、古い共通キー「okodukaiApp」にデータがある場合は、お母さん側のデータとして引き継ぐよ
+      if (!raw && currentParent === 'mom') {
+        const oldRaw = localStorage.getItem('okodukaiApp');
+        if (oldRaw) {
+          raw = oldRaw;
+          localStorage.setItem(getStorageKey(), oldRaw); // 引き継いで保存
+        }
+      }
+
+      // 一旦データを最初の状態（デフォルト）に戻してから読み込むよ
+      appData = {
+        currentMoney: 0,
+        records: [],
+        missions: [],
+        pendingApprovals: [],
+        unpaidChores: [],
+        goalName: 'ゲーム',
+        goalAmount: 3000,
+        graphPeriod: '今週',
+        goalAchieved: false,
+        parentPin: '1234',
+        chats: [] // デフォルトを空にするよ
+      };
+
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          appData = { ...appData, ...parsed };
+          if (!appData.missions) appData.missions = [];
+          if (!appData.pendingApprovals) appData.pendingApprovals = [];
+          if (!appData.unpaidChores) appData.unpaidChores = [];
+          if (!appData.chats) appData.chats = []; // チャットデータがないときの対策だよ
+        } catch (e) { /* 初期値のまま */ }
+      }
+    }
+
+    // ===== 効果音（Web Audio API） =====
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    /** ピコーン！（目標達成） */
+    function playCelebrateSound() {
+      const ctx = getAudioCtx();
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.12;
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        osc.start(t);
+        osc.stop(t + 0.3);
+      });
+    }
+
+    /** ガーン…（使いすぎ） */
+    function playGakkuriSound() {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.8);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.9);
+    }
+
+    // ===== 紙吹雪 =====
+    function spawnConfetti() {
+      const colors = ['#ff6b9d', '#ffd43b', '#51cf66', '#4dabf7', '#9775fa', '#ff922b'];
+      for (let i = 0; i < 60; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.style.animationDuration = (2 + Math.random() * 2) + 's';
+        el.style.animationDelay = Math.random() * 0.5 + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 4500);
+      }
+    }
+
+    // ===== UI更新 =====
+    function updateDateDisplay() {
+      const today = getToday();
+      document.getElementById('todayDate').innerHTML = '📅 きょうは ' + today.displayHtml;
+    }
+
+    function updateBalanceDisplay() {
+      const el = document.getElementById('balanceDisplay');
+      const money = appData.currentMoney;
+      el.innerHTML = money.toLocaleString() + '<small>えん</small>';
+      el.classList.toggle('negative', money < 0);
+
+      const pct = Math.min(100, Math.max(0, (money / appData.goalAmount) * 100));
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('goalNameDisplay').textContent = appData.goalName;
+      document.getElementById('goalAmountDisplay').textContent = appData.goalAmount.toLocaleString() + 'えん';
+    }
+
+    function recalculateBalance() {
+      appData.currentMoney = appData.records.reduce((sum, [, , amount]) => sum + amount, 0);
+    }
+
+    function updateHistoryDisplay() {
+      const list = document.getElementById('historyList');
+      const deleteAllBtn = document.getElementById('btnDeleteAll');
+      deleteAllBtn.style.display = appData.records.length > 0 ? 'block' : 'none';
+
+      if (appData.records.length === 0) {
+        list.innerHTML = '<div class="empty-msg">まだ<ruby>記<rt>き</rt></ruby><ruby>録<rt>ろく</rt></ruby>がないよ 🌱</div>';
+        return;
+      }
+
+      const sorted = appData.records
+        .map((rec, index) => ({ rec, index }))
+        .reverse();
+
+      list.innerHTML = sorted.map(({ rec, index }) => {
+        const [date, reason, amount] = rec;
+        const isPlus = amount > 0;
+        const sign = isPlus ? '＋' : '－';
+        const cls = isPlus ? 'plus' : 'minus';
+        const displayDate = date.includes('年') ? date.replace(/(\d+)年(\d+)月(\d+)日/, '$1/$2/$3') : date;
+        return `
+          <div class="history-item ${cls}">
+            <div class="history-date">${displayDate}</div>
+            <div class="history-reason">${escapeHtml(reason)}</div>
+            <div class="history-amount ${cls}">${sign}${Math.abs(amount).toLocaleString()}えん</div>
+            <button type="button" class="btn-delete-one" data-index="${index}" title="けす">🗑️</button>
+          </div>`;
+      }).join('');
+    }
+
+    function deleteRecord(index) {
+      const [date, reason, amount] = appData.records[index];
+      const sign = amount > 0 ? '＋' : '－';
+      const msg = `${date}\n「${reason}」\n${sign}${Math.abs(amount)}えん\n\nこれを けす？`;
+      if (!confirm(msg)) return;
+
+      appData.records.splice(index, 1);
+      recalculateBalance();
+      saveData();
+      refreshUI();
+      if (currentMode === 'parent') refreshParentUI();
+    }
+
+    function deleteAllRecords() {
+      if (appData.records.length === 0) return;
+      if (!confirm('りれきを ぜんぶ けす？\n（もちがねも 0えんに なるよ）')) return;
+
+      appData.records = [];
+      appData.currentMoney = 0;
+      saveData();
+      refreshUI();
+      if (currentMode === 'parent') refreshParentUI();
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    // ===== グラフ =====
+    function getPeriodDays() {
+      return appData.graphPeriod === '今週' ? 7 : 30;
+    }
+
+    function buildChartData() {
+      const days = getPeriodDays();
+      const today = getToday().dateObj;
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - (days - 1));
+      startDate.setHours(0, 0, 0, 0);
+
+      const labels = [];
+      const dateKeys = [];
+      for (let i = 0; i < days; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
+        labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+        dateKeys.push(formatDateISO(d));
+      }
+
+      const dailyChange = {};
+      dateKeys.forEach(k => { dailyChange[k] = 0; });
+
+      appData.records.forEach(([dateStr, , amount]) => {
+        const rd = parseRecordDate(dateStr);
+        const key = formatDateISO(rd);
+        if (dailyChange[key] !== undefined) {
+          dailyChange[key] += amount;
+        }
+      });
+
+      let runningBefore = 0;
+      appData.records.forEach(([dateStr, , amount]) => {
+        const rd = parseRecordDate(dateStr);
+        if (rd < startDate) runningBefore += amount;
+      });
+
+      const balances = [];
+      let running = runningBefore;
+      dateKeys.forEach(key => {
+        running += dailyChange[key];
+        balances.push(running);
+      });
+
+      return { labels, balances };
+    }
+
+    function updateChart() {
+      const { labels, balances } = buildChartData();
+      const ctx = document.getElementById('moneyChart').getContext('2d');
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'お<ruby>金<rt>かね</rt></ruby>（えん）',
+            data: balances,
+            borderColor: '#ff6b9d',
+            backgroundColor: 'rgba(255, 107, 157, 0.15)',
+            borderWidth: 3,
+            pointRadius: 5,
+            pointBackgroundColor: '#ff6b9d',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ctx.parsed.y.toLocaleString() + ' えん'
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: {
+                callback: (v) => v.toLocaleString() + 'えん',
+                font: { size: 11, family: 'inherit' }
+              },
+              grid: { color: 'rgba(0,0,0,0.06)' }
+            },
+            x: {
+              ticks: { font: { size: 11, family: 'inherit' }, maxRotation: 0 },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // ===== 入出金 =====
+    function addMoney() {
+      const amount = parseInt(document.getElementById('amountInput').value, 10);
+      const reason = document.getElementById('reasonInput').value.trim() || '（りゆうなし）';
+
+      if (!amount || amount <= 0) {
+        alert('💴 きんがくを いれてね！');
+        return;
+      }
+
+      const prevMoney = appData.currentMoney;
+      const today = getToday();
+
+      appData.currentMoney += amount;
+      appData.records.push([today.plain, reason, amount]);
+
+      saveData();
+      refreshUI();
+      if (currentMode === 'parent') refreshParentUI();
+      clearInputs();
+
+      if (prevMoney < appData.goalAmount && appData.currentMoney >= appData.goalAmount) {
+        showCelebrate();
+      }
+    }
+
+    function subMoney() {
+      const amount = parseInt(document.getElementById('amountInput').value, 10);
+      const reason = document.getElementById('reasonInput').value.trim() || '（りゆうなし）';
+
+      if (!amount || amount <= 0) {
+        alert('💴 きんがくを いれてね！');
+        return;
+      }
+
+      const prevMoney = appData.currentMoney;
+      const today = getToday();
+
+      appData.currentMoney -= amount;
+      appData.records.push([today.plain, reason, -amount]);
+
+      saveData();
+      refreshUI();
+      if (currentMode === 'parent') refreshParentUI();
+      clearInputs();
+
+      if (prevMoney >= 0 && appData.currentMoney < 0) {
+        showGakkuri();
+      }
+    }
+
+    function clearInputs() {
+      document.getElementById('amountInput').value = '';
+      document.getElementById('reasonInput').value = '';
+    }
+
+    // ===== ミッション =====
+    function updateMissionDisplay() {
+      const kidList = document.getElementById('kidMissionList');
+      const parentList = document.getElementById('parentMissionList');
+
+      if (!appData.missions || appData.missions.length === 0) {
+        kidList.innerHTML = '<div class="empty-msg">いまは ミッションがないよ 🏖️</div>';
+        parentList.innerHTML = '<div class="empty-msg">ミッションはありません</div>';
+        return;
+      }
+
+      const kidHtml = appData.missions.map((m, i) => `
+        <div class="mission-item">
+          <div class="mission-name">${escapeHtml(m.name)}</div>
+          <div class="mission-reward">${m.reward.toLocaleString()}えん</div>
+          <button type="button" class="btn-mission-done" data-index="${i}">やった！🌟</button>
+        </div>
+      `).join('');
+      kidList.innerHTML = kidHtml;
+
+      const parentHtml = appData.missions.map((m, i) => `
+        <div class="mission-item">
+          <div class="mission-name">${escapeHtml(m.name)}</div>
+          <div class="mission-reward">${m.reward.toLocaleString()}えん</div>
+          <button type="button" class="btn-delete-one" data-index="${i}" title="けす" style="margin-left: auto;">🗑️</button>
+        </div>
+      `).join('');
+      parentList.innerHTML = parentHtml;
+    }
+
+    function updateUnpaidChoresDisplay() {
+      const list = document.getElementById('unpaidChoresList');
+      if (!list) return;
+
+      if (!appData.unpaidChores || appData.unpaidChores.length === 0) {
+        list.innerHTML = '<div class="empty-msg">お金を渡す待ちのものは ありません</div>';
+        return;
+      }
+
+      list.innerHTML = appData.unpaidChores.map((m, i) => `
+        <div class="mission-item" style="background: #fff4e6; border-color: var(--orange);">
+          <div class="mission-name">${escapeHtml(m.name)}</div>
+          <div class="mission-reward" style="color: var(--orange);">${m.reward.toLocaleString()}えん</div>
+          <button type="button" class="btn-pay-chore" data-index="${i}" style="margin-left: auto; background: var(--orange); color: white; border: none; padding: 8px 12px; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #d9480f; transition: transform 0.1s, box-shadow 0.1s;">💰 渡したよ</button>
+        </div>
+      `).join('');
+    }
+
+    function payChore(index) {
+      const mission = appData.unpaidChores[index];
+      if (!confirm(`本物の「${mission.reward}えん」を渡したんだね？\nアプリの持ち金に追加するよ！`)) return;
+
+      appData.unpaidChores.splice(index, 1);
+
+      const prevMoney = appData.currentMoney;
+      appData.currentMoney += mission.reward;
+      const today = getToday();
+      appData.records.push([today.plain, '🌟 ' + mission.name, mission.reward]);
+
+      saveData();
+      refreshParentUI();
+
+      if (prevMoney < appData.goalAmount && appData.currentMoney >= appData.goalAmount) {
+        showCelebrate();
+      }
+    }
+
+    function addMission() {
+      const name = document.getElementById('missionNameInput').value.trim();
+      const reward = parseInt(document.getElementById('missionRewardInput').value, 10);
+
+      if (!name) {
+        alert('📝 なまえを いれてね！');
+        return;
+      }
+      if (!reward || reward <= 0) {
+        alert('💴 ごほうびを いれてね！');
+        return;
+      }
+
+      if (!appData.missions) appData.missions = [];
+      appData.missions.push({ name, reward });
+      saveData();
+      
+      document.getElementById('missionNameInput').value = '';
+      document.getElementById('missionRewardInput').value = '';
+      
+      updateMissionDisplay();
+    }
+
+    function completeMission(index) {
+      const mission = appData.missions[index];
+      if (!confirm('「' + mission.name + '」をやったんだね！\nおうちの人に かくにんしてもらおう！')) return;
+
+      appData.missions.splice(index, 1);
+      if (!appData.pendingApprovals) appData.pendingApprovals = [];
+      appData.pendingApprovals.push(mission);
+      
+      saveData();
+      refreshUI();
+
+      alert('ミッションを「かくにん待ち」にしたよ！\nほごしゃの人がチェックしたら、おこづかいがもらえるよ✨');
+    }
+
+    function deleteMission(index) {
+      if (!confirm('このミッションを けす？')) return;
+      appData.missions.splice(index, 1);
+      saveData();
+      updateMissionDisplay();
+    }
+
+    // ===== オーバーレイ =====
+    function showCelebrate() {
+      document.getElementById('celebrateMsg').innerHTML =
+        `「${escapeHtml(appData.goalName)}」の<ruby>目標<rt>もくひょう</rt></ruby>` +
+        `<strong>${appData.goalAmount.toLocaleString()}えん</strong>を<br>` +
+        `<ruby>達<rt>たっ</rt></ruby><ruby>成<rt>せい</rt></ruby>したよ！ 🎉`;
+      document.getElementById('celebrateOverlay').classList.add('show');
+      playCelebrateSound();
+      spawnConfetti();
+      appData.goalAchieved = true;
+      saveData();
+    }
+
+    function showGakkuri() {
+      document.getElementById('gakkuriOverlay').classList.add('show');
+      playGakkuriSound();
+    }
+
+    function checkPendingApprovals() {
+      if (currentMode !== 'parent') return;
+      if (!appData.pendingApprovals || appData.pendingApprovals.length === 0) {
+        document.getElementById('approvalOverlay').classList.remove('show');
+        return;
+      }
+
+      const mission = appData.pendingApprovals[0];
+      document.getElementById('approvalMsg').innerHTML = 
+        `お子様がミッション<br><strong>「${escapeHtml(mission.name)}」</strong><br>をおわらせたらしいです。<br>かくにんしてください👀`;
+      document.getElementById('approvalOverlay').classList.add('show');
+    }
+
+    function refreshUI() {
+      if (currentMode !== 'kid') return;
+      updateBalanceDisplay();
+      updateHistoryDisplay();
+      updateChart();
+      updateMissionDisplay();
+      updateChatDisplay(); // チャット画面も新しくするよ
+    }
+
+    // ===== モード切替 =====
+    function setMode(mode) {
+      currentMode = mode;
+      const isParent = mode === 'parent';
+      document.getElementById('kidMode').classList.toggle('hidden', isParent);
+      document.getElementById('parentMode').classList.toggle('hidden', !isParent);
+      document.body.classList.toggle('parent-mode', isParent);
+
+      const label = document.getElementById('modeLabel');
+      const btn = document.getElementById('btnModeSwitch');
+      const headerTitle = document.getElementById('parentHeaderTitle');
+      const selector = document.getElementById('btnOpenParentChoice');
+      
+      const parentName = currentParent === 'mom' ? 'お母さん' : 'お父さん';
+      
+      if (isParent) {
+        label.textContent = `👨‍👩‍👧 ${parentName}モード`;
+        label.className = 'mode-label parent';
+        headerTitle.innerHTML = currentParent === 'mom' ? '👩 お母さんモード' : '👨 お父さんモード';
+        btn.textContent = '👦 じぶんモードへ';
+        btn.classList.add('kid-back');
+        
+        // ほごしゃモードのときだけ、お母さん・お父さんの切り替えボタンを見せるよ！
+        if (selector) selector.style.display = 'block';
+        
+        refreshParentUI();
+        checkPendingApprovals();
+      } else {
+        label.textContent = '👦 じぶんモード';
+        label.className = 'mode-label kid';
+        btn.textContent = '🔒 ほごしゃモード';
+        btn.classList.remove('kid-back');
+        
+        // じぶんモードのときは、お母さん・お父さんの切り替えボタンを隠すよ！
+        if (selector) selector.style.display = 'none';
+        
+        refreshUI();
+      }
+    }
+
+    // お母さんモードとお父さんモードを切り替える関数だよ
+    function switchParent(parent) {
+      currentParent = parent;
+      
+      // 新しい親のデータを読み込むよ
+      loadData();
+      
+      // 目標設定の入力欄を同期するよ
+      syncGoalInputs();
+
+      // 画面の表示を新しくするよ
+      if (currentMode === 'parent') {
+        setMode('parent'); // ヘッダーなどの表示も更新するためにsetModeを呼び出すよ
+      } else {
+        refreshUI();
+      }
+    }
+
+    function showPinOverlay() {
+      document.getElementById('pinError').textContent = '';
+      document.getElementById('pinInput').value = '';
+      document.getElementById('pinOverlay').classList.add('show');
+      setTimeout(() => document.getElementById('pinInput').focus(), 100);
+    }
+
+    function hidePinOverlay() {
+      document.getElementById('pinOverlay').classList.remove('show');
+    }
+
+    // お母さんかお父さんか選ぶ大きな画面を出すよ
+    function showParentChoiceOverlay() {
+      document.getElementById('parentChoiceOverlay').classList.add('show');
+    }
+
+    // お母さんかお父さんか選ぶ大きな画面を隠すよ
+    function hideParentChoiceOverlay() {
+      document.getElementById('parentChoiceOverlay').classList.remove('show');
+    }
+
+    function tryEnterParentMode() {
+      const pin = document.getElementById('pinInput').value;
+      if (pin === appData.parentPin) {
+        hidePinOverlay();
+        // PINが合っていたら、だれが入るかを選ぶ「バーン！」という画面を出すよ
+        showParentChoiceOverlay();
+      } else {
+        document.getElementById('pinError').textContent = 'PINが ちがうよ！';
+      }
+    }
+
+    function handleModeSwitch() {
+      if (currentMode === 'kid') {
+        showPinOverlay();
+      } else {
+        setMode('kid');
+      }
+    }
+
+    function saveParentPin() {
+      const pin = document.getElementById('newPinInput').value;
+      if (!/^\d{4}$/.test(pin)) {
+        alert('PINは 4けたの すうじで 入れてね！');
+        return;
+      }
+      appData.parentPin = pin;
+      saveData();
+      document.getElementById('newPinInput').value = '';
+      alert('PINを かえたよ！');
+    }
+
+    // ===== 保護者モード：分析 =====
+    function filterRecordsByDays(days) {
+      if (!days) return [...appData.records];
+      const today = getToday().dateObj;
+      const start = new Date(today);
+      start.setDate(start.getDate() - (days - 1));
+      start.setHours(0, 0, 0, 0);
+      return appData.records.filter(([dateStr]) => parseRecordDate(dateStr) >= start);
+    }
+
+    function calcStats(records) {
+      let income = 0;
+      let expense = 0;
+      const spendByReason = {};
+      const incomeByReason = {};
+
+      records.forEach(([, reason, amount]) => {
+        if (amount > 0) {
+          income += amount;
+          incomeByReason[reason] = (incomeByReason[reason] || 0) + amount;
+        } else {
+          const abs = Math.abs(amount);
+          expense += abs;
+          spendByReason[reason] = (spendByReason[reason] || 0) + abs;
+        }
+      });
+
+      return { income, expense, count: records.length, spendByReason, incomeByReason };
+    }
+
+    function getGrowthInfo() {
+      if (appData.records.length === 0) {
+        return { activeDays: 0, maxBalance: 0, firstDate: null, daysSinceStart: 0 };
+      }
+
+      const dates = appData.records.map(([d]) => parseRecordDate(d));
+      const firstDate = new Date(Math.min(...dates.map(d => d.getTime())));
+      const today = getToday().dateObj;
+      const daysSinceStart = Math.max(1, Math.ceil((today - firstDate) / (1000 * 60 * 60 * 24)) + 1);
+
+      const uniqueDates = new Set(appData.records.map(([d]) => d));
+      let running = 0;
+      let maxBalance = 0;
+      appData.records.forEach(([, , amount]) => {
+        running += amount;
+        if (running > maxBalance) maxBalance = running;
+      });
+
+      return {
+        activeDays: uniqueDates.size,
+        maxBalance,
+        firstDate,
+        daysSinceStart
+      };
+    }
+
+    function buildParentGrowthData(days) {
+      if (appData.records.length === 0) {
+        return { labels: [], balances: [] };
+      }
+
+      let startDate, endDate;
+      endDate = getToday().dateObj;
+      if (days) {
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - (days - 1));
+      } else if (appData.records.length > 0) {
+        const dates = appData.records.map(([d]) => parseRecordDate(d));
+        startDate = new Date(Math.min(...dates.map(d => d.getTime())));
+      } else {
+        startDate = new Date(endDate);
+      }
+      startDate.setHours(0, 0, 0, 0);
+
+      const labels = [];
+      const dateKeys = [];
+      const cursor = new Date(startDate);
+      while (cursor <= endDate) {
+        labels.push(`${cursor.getMonth() + 1}/${cursor.getDate()}`);
+        dateKeys.push(formatDateISO(cursor));
+        cursor.setDate(cursor.getDate() + 1);
+      }
+
+      const dailyChange = {};
+      dateKeys.forEach(k => { dailyChange[k] = 0; });
+
+      appData.records.forEach(([dateStr, , amount]) => {
+        const key = formatDateISO(parseRecordDate(dateStr));
+        if (dailyChange[key] !== undefined) {
+          dailyChange[key] += amount;
+        }
+      });
+
+      let runningBefore = 0;
+      appData.records.forEach(([dateStr, , amount]) => {
+        const rd = parseRecordDate(dateStr);
+        if (rd < startDate) runningBefore += amount;
+      });
+
+      const balances = [];
+      let running = runningBefore;
+      dateKeys.forEach(key => {
+        running += dailyChange[key] || 0;
+        balances.push(running);
+      });
+
+      return { labels, balances };
+    }
+
+    function renderBreakdown(containerId, dataMap, type) {
+      const el = document.getElementById(containerId);
+      const entries = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
+      if (entries.length === 0) {
+        el.innerHTML = '<div class="empty-msg">まだ データが ないよ</div>';
+        return;
+      }
+      const max = entries[0][1];
+      el.innerHTML = entries.map(([name, amount]) => {
+        const pct = Math.round((amount / max) * 100);
+        return `
+          <div class="breakdown-item">
+            <div class="breakdown-name">${escapeHtml(name)}</div>
+            <div class="breakdown-bar-wrap">
+              <div class="breakdown-bar ${type}" style="width:${pct}%"></div>
+            </div>
+            <div class="breakdown-amount">${amount.toLocaleString()}えん</div>
+          </div>`;
+      }).join('');
+    }
+
+    function updateParentStats() {
+      const weekRecords = filterRecordsByDays(7);
+      const monthRecords = filterRecordsByDays(30);
+      const allStats = calcStats(appData.records);
+      const weekStats = calcStats(weekRecords);
+      const growth = getGrowthInfo();
+      const goalPct = Math.min(100, Math.round((appData.currentMoney / appData.goalAmount) * 100));
+
+      document.getElementById('parentStats').innerHTML = `
+        <div class="stat-card highlight">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">いまの もちがね</div>
+          <div class="stat-value">${appData.currentMoney.toLocaleString()}えん</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-label">もくひょう「${escapeHtml(appData.goalName)}」</div>
+          <div class="stat-value small">${goalPct}% たっせい</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-label">これまでの 最高</div>
+          <div class="stat-value small">${growth.maxBalance.toLocaleString()}えん</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-label">きろくした 日数</div>
+          <div class="stat-value small">${growth.activeDays}日</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">➕</div>
+          <div class="stat-label">こんしゅう の 入金</div>
+          <div class="stat-value green">${weekStats.income.toLocaleString()}えん</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">➖</div>
+          <div class="stat-label">こんしゅう の 支出</div>
+          <div class="stat-value red">${weekStats.expense.toLocaleString()}えん</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">➕</div>
+          <div class="stat-label">こんげつ の 入金</div>
+          <div class="stat-value green">${calcStats(monthRecords).income.toLocaleString()}えん</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">➖</div>
+          <div class="stat-label">こんげつ の 支出</div>
+          <div class="stat-value red">${calcStats(monthRecords).expense.toLocaleString()}えん</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-label">ぜんぶの 入金</div>
+          <div class="stat-value green small">${allStats.income.toLocaleString()}えん</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-label">ぜんぶの 支出</div>
+          <div class="stat-value red small">${allStats.expense.toLocaleString()}えん</div>
+        </div>
+      `;
+
+      const goalDone = appData.currentMoney >= appData.goalAmount;
+      let growthText = '';
+      if (appData.records.length === 0) {
+        growthText = '🌱 まだ きろくが ありません。お子さんが きろくを はじめると、ここに せいちょうが 見えます。';
+      } else {
+        growthText = `📌 きろくは <strong>${growth.daysSinceStart}日</strong>間で <strong>${appData.records.length}件</strong>。`;
+        growthText += ` もっとも 多く もっていたのは <strong>${growth.maxBalance.toLocaleString()}えん</strong>。`;
+        if (goalDone) {
+          growthText += ' 🎉 <strong>もくひょうを たっせい</strong>しています！';
+        } else {
+          const remain = appData.goalAmount - appData.currentMoney;
+          growthText += ` もくひょうまで あと <strong>${remain.toLocaleString()}えん</strong>。`;
+        }
+      }
+      document.getElementById('growthMsg').innerHTML = growthText;
+    }
+
+    function updateParentGrowthChart() {
+      const days = parentChartPeriod || null;
+      const { labels, balances } = buildParentGrowthData(days);
+      const ctx = document.getElementById('parentGrowthChart').getContext('2d');
+      if (parentGrowthChart) parentGrowthChart.destroy();
+
+      if (labels.length === 0) {
+        parentGrowthChart = null;
+        return;
+      }
+
+      parentGrowthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'もちがね',
+            data: balances,
+            borderColor: '#5c7cfa',
+            backgroundColor: 'rgba(92, 124, 250, 0.12)',
+            borderWidth: 3,
+            pointRadius: labels.length > 14 ? 2 : 5,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: { label: (c) => c.parsed.y.toLocaleString() + ' えん' }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: (v) => v.toLocaleString() + 'えん',
+                font: { size: 10 }
+              },
+              grid: { color: 'rgba(0,0,0,0.06)' }
+            },
+            x: {
+              ticks: { font: { size: 10 }, maxTicksLimit: 10 },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function updateParentSpendChart() {
+      const monthRecords = filterRecordsByDays(30);
+      const { spendByReason } = calcStats(monthRecords);
+      const entries = Object.entries(spendByReason).sort((a, b) => b[1] - a[1]);
+      const ctx = document.getElementById('parentSpendChart').getContext('2d');
+
+      if (parentSpendChart) parentSpendChart.destroy();
+
+      const colors = ['#ff922b', '#ff6b6b', '#ffd43b', '#9775fa', '#4dabf7', '#51cf66', '#ff6b9d'];
+
+      if (entries.length === 0) {
+        parentSpendChart = null;
+        document.getElementById('spendBreakdown').innerHTML = '<div class="empty-msg">こんげつは まだ つかっていません</div>';
+        return;
+      }
+
+      parentSpendChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: entries.map(([n]) => n),
+          datasets: [{
+            data: entries.map(([, v]) => v),
+            backgroundColor: colors.slice(0, entries.length),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } }
+          }
+        }
+      });
+
+      renderBreakdown('spendBreakdown', spendByReason, 'spend');
+    }
+
+    function updateParentHistory() {
+      const list = document.getElementById('parentHistoryList');
+      if (appData.records.length === 0) {
+        list.innerHTML = '<div class="empty-msg">きろくが まだ ありません</div>';
+        return;
+      }
+
+      const sorted = [...appData.records].reverse();
+      list.innerHTML = sorted.map(([date, reason, amount]) => {
+        const isPlus = amount > 0;
+        const sign = isPlus ? '＋' : '－';
+        const cls = isPlus ? 'plus' : 'minus';
+        const displayDate = date.includes('年')
+          ? date.replace(/(\d+)年(\d+)月(\d+)日/, '$1/$2/$3')
+          : date;
+        return `
+          <div class="parent-history-item ${cls}">
+            <span style="color:#888;min-width:72px">${displayDate}</span>
+            <span style="flex:1">${escapeHtml(reason)}</span>
+            <strong style="color:${isPlus ? 'var(--green)' : 'var(--red)'}">${sign}${Math.abs(amount).toLocaleString()}えん</strong>
+          </div>`;
+      }).join('');
+    }
+
+    function refreshParentUI() {
+      if (currentMode !== 'parent') return;
+      const today = getToday();
+      document.getElementById('parentTodayDate').innerHTML = '📅 ' + today.displayHtml;
+
+      const monthRecords = filterRecordsByDays(30);
+      const { incomeByReason } = calcStats(monthRecords);
+
+      updateParentStats();
+      updateParentGrowthChart();
+      updateParentSpendChart();
+      renderBreakdown('incomeBreakdown', incomeByReason, 'income');
+      updateParentHistory();
+      updateMissionDisplay();
+      updateUnpaidChoresDisplay();
+      updateChatDisplay(); // チャット画面も新しくするよ
+
+      document.querySelectorAll('#parentPeriodBtns .period-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.parentPeriod, 10) === parentChartPeriod);
+      });
+    }
+
+    // ===== チャット機能の処理 =====
+
+    // チャットデータ用の変数
+    let sharedChats = { mom: [], dad: [] };
+    let activeKidChatRecipient = 'mom'; // じぶんモードでのチャットあいて（最初は 'mom'）
+
+    // 共有チャットデータを保存するよ
+    function saveSharedChats() {
+      localStorage.setItem('okodukaiApp_sharedChats', JSON.stringify(sharedChats));
+    }
+
+    // 共有チャットデータを読み込むよ
+    function loadSharedChats() {
+      const raw = localStorage.getItem('okodukaiApp_sharedChats');
+      if (raw) {
+        try {
+          sharedChats = JSON.parse(raw);
+          if (!sharedChats.mom) sharedChats.mom = [];
+          if (!sharedChats.dad) sharedChats.dad = [];
+        } catch (e) {
+          sharedChats = { mom: [], dad: [] };
+        }
+      } else {
+        sharedChats = { mom: [], dad: [] };
+      }
+
+      // 古いチャットデータを共有チャットに移行するよ
+      if (sharedChats.mom.length === 0 && appData.chats && appData.chats.length > 0 && currentParent === 'mom') {
+        sharedChats.mom = [...appData.chats];
+        saveSharedChats();
+      }
+    }
+
+    // チャットの画面表示を最新（さいしん）にするよ
+    function updateChatDisplay() {
+      const kidContainer = document.getElementById('kidChatContainer');
+      const parentContainer = document.getElementById('parentChatContainer');
+      const kidTitle = document.getElementById('kidChatTitle');
+
+      // 最新のメッセージを読み込むよ
+      loadSharedChats();
+
+      // 1. じぶんモード（子供用）の表示
+      if (kidContainer) {
+        const btnMom = document.getElementById('btnKidChatMom');
+        const btnDad = document.getElementById('btnKidChatDad');
+        
+        // 選択している方のボタンを光らせるよ
+        if (activeKidChatRecipient === 'mom') {
+          btnMom.classList.add('active');
+          btnDad.classList.remove('active');
+        } else {
+          btnMom.classList.remove('active');
+          btnDad.classList.add('active');
+        }
+
+        const partnerLabel = activeKidChatRecipient === 'mom' ? 'お母さん' : 'お父さん';
+        if (kidTitle) {
+          kidTitle.textContent = `💬 ${partnerLabel}とのチャット`;
+        }
+
+        const messages = sharedChats[activeKidChatRecipient] || [];
+
+        if (messages.length === 0) {
+          kidContainer.innerHTML = `<div class="empty-msg">${partnerLabel}とチャットを始めてみよう！</div>`;
+        } else {
+          kidContainer.innerHTML = messages.map((msg, index) => {
+            const isFromKid = msg.sender === 'kid';
+            const plainTime = msg.time || '';
+            const kidMsgClass = isFromKid ? 'right' : 'left';
+            return `
+              <div class="chat-msg-wrapper ${kidMsgClass}">
+                <div class="chat-bubble">${escapeHtml(msg.text)}</div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <span class="chat-time">${plainTime}</span>
+                  <button type="button" class="btn-delete-msg" onclick="deleteChatMessage(${index})" title="メッセージをけす">🗑️</button>
+                </div>
+              </div>`;
+          }).join('');
+          kidContainer.scrollTop = kidContainer.scrollHeight; // 一番下まで自動でスクロール
+        }
+      }
+
+      // 2. ほごしゃモード（親用）の表示
+      if (parentContainer) {
+        const messages = sharedChats[currentParent] || [];
+        if (messages.length === 0) {
+          parentContainer.innerHTML = '<div class="empty-msg">お子さんとチャットを始めてみよう！</div>';
+        } else {
+          parentContainer.innerHTML = messages.map((msg, index) => {
+            const isFromKid = msg.sender === 'kid';
+            const plainTime = msg.time || '';
+            const parentMsgClass = isFromKid ? 'left' : 'right parent-bubble';
+            return `
+              <div class="chat-msg-wrapper ${parentMsgClass}">
+                <div class="chat-bubble">${escapeHtml(msg.text)}</div>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                  <span class="chat-time">${plainTime}</span>
+                  <button type="button" class="btn-delete-msg" onclick="deleteChatMessage(${index})" title="メッセージをけす">🗑️</button>
+                </div>
+              </div>`;
+          }).join('');
+          parentContainer.scrollTop = parentContainer.scrollHeight; // 一番下まで自動でスクロール
+        }
+      }
+    }
+
+    // チャットでメッセージをおくるよ
+    function sendChatMessage(sender) {
+      const inputId = sender === 'kid' ? 'chatInputKid' : 'chatInputParent';
+      const inputEl = document.getElementById(inputId);
+      const text = inputEl.value.trim();
+
+      if (!text) return;
+
+      const d = new Date();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const time = `${d.getHours()}:${minutes}`;
+
+      // おくる相手のキー（子供なら選択した相手、親なら自分）
+      const recipient = sender === 'kid' ? activeKidChatRecipient : currentParent;
+
+      if (!sharedChats[recipient]) sharedChats[recipient] = [];
+      sharedChats[recipient].push({
+        sender,
+        text,
+        time
+      });
+
+      saveSharedChats();
+      inputEl.value = '';
+      updateChatDisplay();
+    }
+
+    // じぶんモードでのチャット相手切り替え
+    function switchKidChatPartner(partner) {
+      activeKidChatRecipient = partner;
+      updateChatDisplay();
+    }
+
+    // メッセージを削除する関数だよ
+    function deleteChatMessage(index) {
+      // どのチャット履歴から消すか決めるよ
+      const chatKey = currentMode === 'parent' ? currentParent : activeKidChatRecipient;
+      const messages = sharedChats[chatKey];
+
+      if (!messages || !messages[index]) return;
+
+      const msg = messages[index];
+      const who = msg.sender === 'kid' ? 'お子さん' : 'おうちの人';
+      
+      if (!confirm(`「${msg.text}」\n（${who}が送ったメッセージ）\n\nこのメッセージを けす？`)) return;
+
+      messages.splice(index, 1);
+      saveSharedChats();
+      updateChatDisplay();
+    }
+
+    // ===== データのバックアップ・ひきつぎの処理 =====
+
+    // すべてのデータを暗号化コード（Base64）にするよ
+    function exportAllData() {
+      // 保存しているデータをすべてあつめるよ
+      const backupData = {
+        mom: localStorage.getItem('okodukaiApp_mom'),
+        dad: localStorage.getItem('okodukaiApp_dad'),
+        sharedChats: localStorage.getItem('okodukaiApp_sharedChats'),
+        lastParent: localStorage.getItem('okodukaiApp_lastParent')
+      };
+
+      try {
+        // オブジェクトを文字列にして、さらに日本語がバグらないように暗号化（Base64）するよ
+        const jsonStr = JSON.stringify(backupData);
+        // encodeURIComponent と btoa をつかって、きれいな英数字のコードにするよ
+        const b64Str = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+          return String.fromCharCode('0x' + p1);
+        }));
+
+        const txtArea = document.getElementById('exportCodeText');
+        const btnCopy = document.getElementById('btnCopyExportCode');
+
+        txtArea.value = b64Str;
+        txtArea.style.display = 'block';
+        btnCopy.style.display = 'block';
+        const qrImg = document.getElementById('exportQrCode');
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(b64Str)}`;
+        qrImg.style.display = 'block';
+      } catch (e) {
+        alert('コードをつくるのに しっぱいしちゃった 😢');
+      }
+    }
+
+    // 暗号化コードをコピーするよ
+    function copyExportCode() {
+      const txtArea = document.getElementById('exportCodeText');
+      txtArea.select();
+      document.execCommand('copy');
+      alert('ひきつぎコードをコピーしたよ！\nとなりのスマホのとりこみ欄に貼り付けてね 📋');
+    }
+
+    // コピーされた暗号化コードを解読して取り込むよ
+    function importAllData() {
+      const codeInput = document.getElementById('importCodeInput');
+      const code = codeInput.value.trim();
+
+      if (!code) {
+        alert('ひきつぎコードを 入れてね！');
+        return;
+      }
+
+      if (!confirm('本当にデータをとりこむ？\n（今のスマホに入っているデータは、すべて消えて新しいデータに置き換わります）')) {
+        return;
+      }
+
+      try {
+        // Base64文字を元のJSON文字列に戻すよ
+        const jsonStr = decodeURIComponent(atob(code).split('').map((c) => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const parsed = JSON.parse(jsonStr);
+
+        // とりこんだデータをそれぞれのキーで保存するよ
+        if (parsed.mom) localStorage.setItem('okodukaiApp_mom', parsed.mom);
+        if (parsed.dad) localStorage.setItem('okodukaiApp_dad', parsed.dad);
+        if (parsed.sharedChats) localStorage.setItem('okodukaiApp_sharedChats', parsed.sharedChats);
+        if (parsed.lastParent) localStorage.setItem('okodukaiApp_lastParent', parsed.lastParent);
+
+        alert('ひきつぎが かんりょうしたよ！\n画面を新しくしてデータを読み込むね！ ✨');
+        // ページをリロードしてデータを反映するよ
+        location.reload();
+      } catch (e) {
+        alert('コードがちがうか、壊れているみたいで読み込めなかったよ 😢');
+      }
+    }
+
+    // ===== 目標設定 =====
+    function syncGoalInputs() {
+      document.getElementById('goalNameInput').value = appData.goalName;
+      document.getElementById('goalAmountInput').value = appData.goalAmount;
+    }
+
+    function saveGoalSettings() {
+      appData.goalName = document.getElementById('goalNameInput').value.trim() || 'ゲーム';
+      appData.goalAmount = Math.max(1, parseInt(document.getElementById('goalAmountInput').value, 10) || 3000);
+      saveData();
+      updateBalanceDisplay();
+    }
+
+    // ===== イベント =====
+    document.getElementById('btnAdd').addEventListener('click', addMoney);
+    document.getElementById('btnSub').addEventListener('click', subMoney);
+
+    document.getElementById('historyList').addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-delete-one');
+      if (!btn) return;
+      deleteRecord(parseInt(btn.dataset.index, 10));
+    });
+
+    document.getElementById('kidMissionList')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-mission-done');
+      if (!btn) return;
+      completeMission(parseInt(btn.dataset.index, 10));
+    });
+
+    document.getElementById('parentMissionList')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-delete-one');
+      if (!btn) return;
+      deleteMission(parseInt(btn.dataset.index, 10));
+    });
+
+    document.getElementById('btnAddMission')?.addEventListener('click', addMission);
+
+    document.getElementById('unpaidChoresList')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-pay-chore');
+      if (!btn) return;
+      
+      btn.style.transform = 'translateY(3px)';
+      btn.style.boxShadow = '0 0 0 transparent';
+      setTimeout(() => payChore(parseInt(btn.dataset.index, 10)), 100);
+    });
+
+    document.getElementById('btnApproveOk')?.addEventListener('click', () => {
+      if (!appData.pendingApprovals || appData.pendingApprovals.length === 0) return;
+      const mission = appData.pendingApprovals.shift();
+
+      if (!appData.unpaidChores) appData.unpaidChores = [];
+      appData.unpaidChores.push(mission);
+
+      saveData();
+      refreshParentUI();
+
+      checkPendingApprovals();
+    });
+
+    document.getElementById('btnApproveNg')?.addEventListener('click', () => {
+      if (!appData.pendingApprovals || appData.pendingApprovals.length === 0) return;
+      const mission = appData.pendingApprovals.shift();
+
+      if (!appData.missions) appData.missions = [];
+      appData.missions.push(mission);
+
+      saveData();
+      refreshParentUI();
+
+      checkPendingApprovals();
+    });
+
+    document.getElementById('btnDeleteAll').addEventListener('click', deleteAllRecords);
+
+    document.getElementById('closeCelebrate').addEventListener('click', () => {
+      document.getElementById('celebrateOverlay').classList.remove('show');
+    });
+
+    document.getElementById('closeGakkuri').addEventListener('click', () => {
+      document.getElementById('gakkuriOverlay').classList.remove('show');
+    });
+
+    document.querySelectorAll('.period-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        appData.graphPeriod = btn.dataset.period;
+        saveData();
+        updateChart();
+      });
+    });
+
+    document.getElementById('goalNameInput').addEventListener('change', saveGoalSettings);
+    document.getElementById('goalAmountInput').addEventListener('change', saveGoalSettings);
+
+    document.getElementById('amountInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addMoney();
+    });
+
+    document.getElementById('btnModeSwitch').addEventListener('click', handleModeSwitch);
+    document.getElementById('btnPinOk').addEventListener('click', tryEnterParentMode);
+    document.getElementById('btnPinCancel').addEventListener('click', hidePinOverlay);
+    document.getElementById('btnSavePin').addEventListener('click', saveParentPin);
+    document.getElementById('pinInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') tryEnterParentMode();
+    });
+
+    document.querySelectorAll('#parentPeriodBtns .period-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        parentChartPeriod = parseInt(btn.dataset.parentPeriod, 10);
+        document.querySelectorAll('#parentPeriodBtns .period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateParentGrowthChart();
+      });
+    });
+
+    // お母さん・お父さんを選ぶ大きな画面のイベント
+    document.getElementById('btnChooseMom').addEventListener('click', () => {
+      hideParentChoiceOverlay();
+      switchParent('mom');
+      setMode('parent');
+    });
+    document.getElementById('btnChooseDad').addEventListener('click', () => {
+      hideParentChoiceOverlay();
+      switchParent('dad');
+      setMode('parent');
+    });
+    document.getElementById('btnCancelChoice').addEventListener('click', () => {
+      hideParentChoiceOverlay();
+      // まだ保護者モードに入っていなければ、じぶんモードに戻るよ
+      if (currentMode !== 'parent') {
+        setMode('kid');
+      }
+    });
+    document.getElementById('btnOpenParentChoice').addEventListener('click', () => {
+      showParentChoiceOverlay();
+    });
+
+    // チャットのメッセージをおくるボタンのイベント
+    document.getElementById('btnSendChatKid').addEventListener('click', () => sendChatMessage('kid'));
+    document.getElementById('btnSendChatParent').addEventListener('click', () => sendChatMessage('parent'));
+
+    // チャット入力らんでエンターキー（Enter）を押したときのイベント
+    document.getElementById('chatInputKid').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage('kid');
+    });
+    document.getElementById('chatInputParent').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage('parent');
+    });
+
+    // じぶんモードでのチャット相手切り替えイベント
+    document.getElementById('btnKidChatMom').addEventListener('click', () => switchKidChatPartner('mom'));
+    document.getElementById('btnKidChatDad').addEventListener('click', () => switchKidChatPartner('dad'));
+
+    // バックアップ・ひきつぎのイベント
+    document.getElementById('btnExportData').addEventListener('click', exportAllData);
+    document.getElementById('btnCopyExportCode').addEventListener('click', copyExportCode);
+    document.getElementById('btnImportData').addEventListener('click', importAllData);
+
+    // ===== 起動 =====
+    function init() {
+      // 最後に選んでいた親を読み込む（なければ 'mom' にするよ）
+      currentParent = localStorage.getItem('okodukaiApp_lastParent') || 'mom';
+
+      loadData();
+
+      updateDateDisplay();
+      syncGoalInputs();
+      updateMissionDisplay();
+      
+      // 最初は「じぶんモード」に設定して、ボタンを隠し、表示を整えるよ
+      setMode('kid');
+
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === appData.graphPeriod);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
